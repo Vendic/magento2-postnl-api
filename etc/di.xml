@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Data models -->
+    <preference for="Vendic\PostnlApi\Api\Data\PostnlRequestInterface"
+                type="Vendic\PostnlApi\Request\PostnlRequest"/>
+    <preference for="Vendic\PostnlApi\Api\Data\LocationInterface"
+                type="Vendic\PostnlApi\Model\Location"/>
+    <preference for="Vendic\PostnlApi\Api\Data\TimeframeInterface"
+                type="Vendic\PostnlApi\Model\Timeframe"/>
+    <preference for="Vendic\PostnlApi\Api\Data\Location\LocationAddressInterface"
+                type="Vendic\PostnlApi\Model\Location\LocationAddress"/>
+
+    <!-- Service methods -->
+    <preference for="Vendic\PostnlApi\Api\LocationsInterface"
+                type="Vendic\PostnlApi\Service\DeliveryOptions\Locations"/>
+    <preference for="Vendic\PostnlApi\Api\SaveInterface"
+                type="Vendic\PostnlApi\Service\DeliveryOptions\Save"/>
+    <preference for="Vendic\PostnlApi\Api\TimeframesInterface"
+                type="Vendic\PostnlApi\Service\DeliveryOptions\Timeframes"/>
+</config>

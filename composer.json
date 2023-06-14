@@ -1,0 +1,18 @@
+{
+    "name": "vendic/magento2-postnl-api",
+    "description": "Adds Magento 2 service methods to the tig/postnl module.",
+    "require": {
+        "php": "~7.4|~8.1",
+        "tig/postnl-magento2": "1.12.8",
+        "magento/magento-composer-installer": "*"
+    },
+    "type": "magento2-module",
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Vendic\\PostnlApi\\": ""
+        }
+    }
+}
