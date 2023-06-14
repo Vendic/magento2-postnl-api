@@ -11,12 +11,15 @@ composer require vendic/magento2-postnl-api
 ## Currently supported service contracts
 ### Locations
 Service contract: `\Vendic\PostnlApi\Api\LocationsInterface`
-Get's the nearest PostNL locations based on a given address
+
+Get's the nearest PostNL locations based on a given address.
 
 ### Save
 Serivce contract: `\Vendic\PostnlApi\Api\SaveInterface`
+
 Saves/initalizes a shipment into the Magento database.
 
 ### Timeframes (WIP)
 Service contract: `\Vendic\PostnlApi\Api\TimeframesInterface`
+
 Get's the available delivery timeframes for a given address.
