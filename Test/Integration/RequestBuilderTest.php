@@ -33,24 +33,9 @@ class RequestBuilderTest extends TestCase
         /** @var QuoteAddress $billingAddress */
         $billingAddress = $objectManager->create(QuoteAddress::class, ['data' => $billingAddressData]);
 
-        $pickupPointData = [
-            LocationInterface::NAME => 'Mobile Express',
-            LocationInterface::COUNTRY => 'BE',
-            LocationInterface::RETAIL_NETWORK_ID => 'PNPBE-01',
-            LocationInterface::LOCATION_CODE => '218791',
-            LocationInterface::FROM => '15:00:00',
-            LocationInterface::CITY => 'Leuven',
-            LocationInterface::HOUSE_NR => '93',
-            LocationInterface::STREET => 'Diestsesteenweg',
-            LocationInterface::ZIPCODE => '3010'
-        ];
-
-        /** @var LocationInterface $postnlPickupLocation */
-        $postnlPickupLocation = $objectManager->create(LocationInterface::class, ['data' => $pickupPointData]);
-
         /** @var RequestBuilder $requestBuilder */
         $requestBuilder = $objectManager->get(RequestBuilder::class);
-        $request = $requestBuilder->buildForLocations($billingAddress, $postnlPickupLocation);
+        $request = $requestBuilder->buildForLocations($billingAddress);
 
         var_dump($request->toArray());
     }
