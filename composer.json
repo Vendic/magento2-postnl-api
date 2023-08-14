@@ -6,6 +6,9 @@
         "tig/postnl-magento2": "1.12.*",
         "magento/magento-composer-installer": "*"
     },
+    "require-dev": {
+        "magento/magento-coding-standard": "*"
+    },
     "type": "magento2-module",
     "autoload": {
         "files": [
