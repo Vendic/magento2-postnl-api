@@ -1,148 +1,133 @@
+# v2.1.1
+
 name: Tests
 env:
-    COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
-    PHP_VERSION: ${{ secrets.PHP_VERSION }}
-    MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-    MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-    MYSQL_USER: ${{ secrets.MYSQL_USER }}
-    MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-    ELASTIC_HOST: ${{ secrets.ELASTIC_HOST }}
-    ELASTIC_PORT: 9200
-    PACKAGIST_URL: ${{ secrets.PACKAGIST_URL }}
-    MAGENTO_VERSION: '2.4.2'
-    MODULE_NAME: 'vendic/magento2-postcode-nl'
+  COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
+  COMPOSER_CACHE_DIR: "/home/composer-cache"
+  PHP_VERSION: ${{ vars.PHP_VERSION }}
+  MYSQL_HOST: ${{ vars.RUNNER_MYSQL_HOST }}
+  MYSQL_PASSWORD: ${{ vars.RUNNER_MYSQL_PASSWORD }}
+  MYSQL_USER: ${{ vars.RUNNER_MYSQL_USER }}
+  MYSQL_PORT: ${{ vars.RUNNER_MYSQL_PORT }}
+  ELASTIC_HOST: ${{ vars.RUNNER_ELASTIC_HOST }}
+  ELASTIC_PORT: 9200
+  PACKAGIST_URL: ${{ vars.PACKAGIST_URL }}
+  MAGENTO_VERSION: "magento/project-community-edition:2.4.5-p1"
 
 on:
-    push:
-        branches:
-            - '**'
-        tags-ignore:
-            - '*.*.*'
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '*.*.*'
 
 jobs:
-    phpcs:
-        name: Code styling
-        runs-on: self-hosted
-        steps:
-            -   name: Clean
-                run: |
-                    if [ -f "/home/runner/.ssh/id_rsa" ]; then rm /home/runner/.ssh/id_rsa; fi
-                    echo "Cleaning up previous run"
-                    rm -rf "${{ github.workspace }}"
-                    rm -rf $HOME/.ssh
-                    mkdir -p "${{ github.workspace }}"
+  integration:
+    runs-on: self-hosted
+    name: Integration tests
+    steps:
+      - uses: Vendic/github-self-hosted-runner-workspace-cleaner@master
 
-            -   uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-            -   name: Setup PHP with PECL extension
-                uses: shivammathur/setup-php@v2
-                with:
-                    coverage: none
-                    php-version: ${{ env.PHP_VERSION }}
-                    tools: composer:v1,
-                    extensions: gd, bcmath, soap, pdo_mysql, ctype, curl, dom, hash, iconv, intl, mbstring, openssl, simplexml, xsl, sockets, zip
-                env:
-                    runner: self-hosted
+      # We need this action for the ${{ env.CI_REF_NAME }} variable.
+      - uses: FranzDiebold/github-env-vars-action@v2
 
-            -   name: Create empty folders
-                run: |
-                    mkdir -p app/etc
-                    touch app/etc/vendor_path.php
+      - name: Set variables
+        run: |
+          MODULE_NAME=$( cat composer.json | jq -r ".name")
+          echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
+          DB_NAME=$(< /dev/urandom tr -dc a-z | head -c9)
+          echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
 
-            -   name: Setup composer repositories
-                run: |
-                    composer config repositories.private-packagist composer ${{ env.PACKAGIST_URL }}
-                    composer config repositories.packagist.org false
+      - name: Check if magento 2 folder exists
+        run: |
+          MAGENTO_DIRECTORY="../magento2"
+          if [ -d "$MAGENTO_DIRECTORY" ]
+          then
+            rm -rf $MAGENTO_DIRECTORY
+          fi
 
-            -   name: Install composer dependencies
-                run: |
-                    composer config --global --auth http-basic.repo.packagist.com token ${{ env.COMPOSER_TOKEN }}
-                    composer install --prefer-dist
+      - uses: graycoreio/github-actions-magento2/setup-magento@main
+        id: setup-magento
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+          mode: extension
+          magento_version: ${{ env.MAGENTO_VERSION }}
 
-            -   name: Run phpcs
-                run: |
-                    vendor/bin/phpcs --config-set installed_paths vendor/magento/magento-coding-standard/
-                    vendor/bin/phpcs --standard=Magento2 ./ --ignore="*vendor/*"
+      - name: Set shared composer cache dir
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          composer config --global cache-dir ${{ env.COMPOSER_CACHE_DIR }}
 
-    integration:
-        name: Integration tests
-        runs-on: self-hosted
-        steps:
+      - name: Setup private packagist
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          composer config --auth http-basic.repo.packagist.com token ${{ env.COMPOSER_TOKEN }}
+          composer config repositories.private-packagist composer ${{ env.PACKAGIST_URL }}
+          composer config repositories.packagist.org false
 
-            -   name: Clean
-                run: |
-                    if [ -f "/home/runner/.ssh/id_rsa" ]; then rm /home/runner/.ssh/id_rsa; fi
-                    echo "Cleaning up previous run"
-                    rm -rf "${{ github.workspace }}"
-                    rm -rf $HOME/.ssh
-                    mkdir -p "${{ github.workspace }}"
+      - name: Setup composer allowed plugins
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          composer config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer config allow-plugins.laminas/laminas-dependency-plugin true
+          composer config allow-plugins.magento/* true
 
-            -   uses: actions/checkout@v2
-            -   uses: FranzDiebold/github-env-vars-action@v2
+      - name: Fix for cannot create vendor_path.php
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          mkdir -p app/etc
 
-            -   name: Set DB name
-                run: |
-                    # DB name
-                    DB_NAME=$(< /dev/urandom tr -dc a-z | head -c9)
-                    echo "DB_NAME=$DB_NAME" >> $GITHUB_ENV
+      - run: composer install --prefer-dist --no-interaction
+        name: Composer install
+        shell: bash
+        working-directory: ${{ steps.setup-magento.outputs.path }}
 
-            -   name: Setup PHP with PECL extension
-                uses: shivammathur/setup-php@v2
-                with:
-                    coverage: none
-                    php-version: ${{ env.PHP_VERSION }}
-                    tools: composer:v1
-                    extensions: gd, bcmath, soap, pdo_mysql, ctype, curl, dom, hash, iconv, intl, mbstring, openssl, simplexml, xsl, sockets, zip
-                env:
-                    runner: self-hosted
+      - name: Install module
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: COMPOSER_MEMORY_LIMIT=-3 composer require ${{ env.MODULE_NAME }}:dev-${{ env.CI_REF_NAME }}
 
-            -   name: Create folder for Magento 2
-                run: |
-                    mkdir magento2
-                    chmod 775 magento2
+      # This is to prevent crashing when we have a dependency on Hyva theme.
+      # Error: Area code "frontend" does not exist
+      - name: Fix for missing config.php
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          cp vendor/${{ env.MODULE_NAME }}/.github/workflows/_files/config.php app/etc/config.php
 
-            -   name: Setup composer authentication
-                run: |
-                    composer config --global --auth http-basic.repo.packagist.com token ${{ env.COMPOSER_TOKEN }}
+      - name: Install supporting modules
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          composer require --dev tddwizard/magento2-fixtures
 
-            -   name: Copy Magento 2 composer.json
-                run: |
-                    cp .github/workflows/_files/composer.json magento2/composer.json
+      - name: Create integration test config
+        id: integration_test_config
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          cp vendor/${{ env.MODULE_NAME }}/.github/workflows/_files/install-config-mysql.php dev/tests/integration/etc/install-config-mysql.php
+          echo "FILE=dev/tests/integration/etc/install-config-mysql.php" >> $GITHUB_OUTPUT
 
-            -   name: Prepare test database
-                run: |
-                    echo 'CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};' |  mysql -h ${{ env.MYSQL_HOST }} -u${{ env.MYSQL_USER}} -p${{ env.MYSQL_PASSWORD }} --port=${{ env.MYSQL_PORT }}
+      - name: Prepare integration test config
+        working-directory: ${{ steps.setup-magento.outputs.path }}
+        run: |
+          sed -i -e "s/{{mysql-db-name}}/${{ env.DB_NAME }}/g" ${{ steps.integration_test_config.outputs.FILE }}
+          sed -i -e "s/{{mysql-host}}/${{ env.MYSQL_HOST }}:${{ env.MYSQL_PORT }}/g" ${{ steps.integration_test_config.outputs.FILE }}
+          sed -i -e "s/{{mysql-password}}/${{ env.MYSQL_PASSWORD }}/g" ${{ steps.integration_test_config.outputs.FILE }}
+          sed -i -e "s/{{mysql-user}}/${{ env.MYSQL_USER }}/g" ${{ steps.integration_test_config.outputs.FILE }}
+          sed -i -e "s/{{elasticsearch-host}}/${{ env.ELASTIC_HOST }}/g" ${{ steps.integration_test_config.outputs.FILE }}
+          sed -i -e "s/{{elasticsearch-port}}/${{ env.ELASTIC_PORT }}/g" ${{ steps.integration_test_config.outputs.FILE }}
 
-            -   name: Prepare integration test config
-                run: |
-                    sed -i -e "s/{{mysql-db-name}}/${{ env.DB_NAME }}/g" .github/workflows/_files/install-config-mysql.php
-                    sed -i -e "s/{{mysql-host}}/${{ env.MYSQL_HOST }}:${{ env.MYSQL_PORT }}/g" .github/workflows/_files/install-config-mysql.php
-                    sed -i -e "s/{{mysql-password}}/${{ env.MYSQL_PASSWORD }}/g" .github/workflows/_files/install-config-mysql.php
-                    sed -i -e "s/{{mysql-user}}/${{ env.MYSQL_USER }}/g" .github/workflows/_files/install-config-mysql.php
-                    sed -i -e "s/{{elasticsearch-host}}/${{ env.ELASTIC_HOST }}/g" .github/workflows/_files/install-config-mysql.php
-                    sed -i -e "s/{{elasticsearch-port}}/${{ env.ELASTIC_PORT }}/g" .github/workflows/_files/install-config-mysql.php
-                    mkdir -p magento2/dev/tests/integration/etc
-                    cp .github/workflows/_files/install-config-mysql.php magento2/dev/tests/integration/etc/install-config-mysql.php
-                    cat magento2/dev/tests/integration/etc/install-config-mysql.php
+      - name: Prepare test database
+        run: |
+          echo 'CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};' |  mysql -h ${{ env.MYSQL_HOST }} -u${{ env.MYSQL_USER}} -p${{ env.MYSQL_PASSWORD }} --port=${{ env.MYSQL_PORT }}
 
-            -   name: Setup Magento 2
-                run: |
-                    cd magento2
-                    COMPOSER_MEMORY_LIMIT=-3 composer require magento/product-community-edition ${{ env.MAGENTO_VERSION }} --no-update
-                    COMPOSER_MEMORY_LIMIT=-3 composer update
-                    COMPOSER_MEMORY_LIMIT=-3 composer config minimum-stability dev
+      - name: Run integration tests
+        working-directory: ${{ steps.setup-magento.outputs.path }}/dev/tests/integration
+        run: |
+          ../../../vendor/bin/phpunit -c phpunit.xml.dist ../../../vendor/${{ env.MODULE_NAME }}
 
-            -   name: Install module
-                run: |
-                    cd magento2
-                    COMPOSER_MEMORY_LIMIT=-3 composer require ${{ env.MODULE_NAME }}:dev-${{ env.CI_REF_NAME }}
-
-            -   name: Run integration tests
-                run: |
-                    cd magento2/dev/tests/integration
-                    ../../../vendor/bin/phpunit -c phpunit.xml.dist ../../../vendor/${{ env.MODULE_NAME }}
-
-            -   name: Clean DB
-                if: ${{ always() }}
-                run: |
-                    echo 'DROP DATABASE IF EXISTS ${{ env.DB_NAME }};' |  mysql -h ${{ env.MYSQL_HOST }} -u${{ env.MYSQL_USER}} -p${{ env.MYSQL_PASSWORD }} --port=${{ env.MYSQL_PORT }}
+      - name: Clean DB
+        if: ${{ always() }}
+        run: |
+          echo 'DROP DATABASE IF EXISTS ${{ env.DB_NAME }};' |  mysql -h ${{ env.MYSQL_HOST }} -u${{ env.MYSQL_USER}} -p${{ env.MYSQL_PASSWORD }} --port=${{ env.MYSQL_PORT }}
