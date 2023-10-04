@@ -1,26 +1,6 @@
 name: Integration Test
 
-on:
-  workflow_dispatch: {}
-  schedule:
-    - cron: 0 12 10 * *
-  push:
-    branches:
-      - master
-      - feature/additional-configuration
-    paths-ignore:
-      - "docs/**"
-      - package.json
-      - package-lock.json
-      - "*.md"
-  pull_request:
-    branches:
-      - master
-    paths-ignore:
-      - "docs/**"
-      - package.json
-      - package-lock.json
-      - "*.md"
+on: [push]
 
 jobs:
   compute_matrix:
