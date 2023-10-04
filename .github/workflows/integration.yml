@@ -8,7 +8,7 @@ jobs:
     outputs:
       matrix: ${{ steps.supported-version.outputs.matrix }}
     steps:
-      - uses: graycoreio/github-actions-magento2/supported-version@main
+      - uses: mage-os/github-actions/supported-version@main
         id: supported-version
         with:
           kind: latest
@@ -16,9 +16,9 @@ jobs:
 
   integration-workflow:
     needs: compute_matrix
-    uses: graycoreio/github-actions-magento2/.github/workflows/integration.yaml@main
+    uses: mage-os/github-actions/.github/workflows/integration.yaml@main
     with:
-      package_name: vendic/magento2-oh-dear-checks
+      package_name: vendic/magento2-postnl-api
       matrix: ${{ needs.compute_matrix.outputs.matrix }}
       test_command: ../../../vendor/bin/phpunit ../../../vendor/vendic/magento2-postnl-api/Test/Integration
       fail-fast: false
