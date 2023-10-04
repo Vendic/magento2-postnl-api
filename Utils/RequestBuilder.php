@@ -69,8 +69,8 @@ class RequestBuilder
         /** @var string|array $street */
         $street = $billingAddress->getStreet();
 
-        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($shippingAddress);
-        $houseNumber = $this->getHousenumber($shippingAddress);
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($billingAddress);
+        $houseNumber = $this->getHousenumber($billingAddress);
 
         // Customer data
         $request->setCustomerData(
