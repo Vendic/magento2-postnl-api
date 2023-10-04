@@ -68,11 +68,9 @@ class RequestBuilder
         // Extract street and housenumber from street array
         /** @var string|array $street */
         $street = $billingAddress->getStreet();
-        $streetString = is_array($street) ?
-            implode(' ', $street) :
-            $street;
-        $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $streetString, $matches) ? $matches[0] : $streetString;
-        $houseNumber = preg_match('/\d(.*)/', $streetString, $matches) ? $matches[0] : '';
+
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($billingAddress);
+        $houseNumber = $this->getHousenumber($billingAddress);
 
         // Customer data
         $request->setCustomerData(
@@ -123,15 +121,9 @@ class RequestBuilder
         // Extract street and housenumber from street array
         /** @var string|array $street */
         $street = $shippingAddress->getStreet();
-        $streetString = is_array($street) ?
-            implode(' ', $street) :
-            $street;
-        $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $streetString, $matches) ?
-            $matches[0] :
-            $streetString;
-        $houseNumber = preg_match('/\d(.*)/', $streetString, $matches) ?
-            $matches[0] :
-            '';
+
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($shippingAddress);
+        $houseNumber = $this->getHousenumber($shippingAddress);
 
         $request->setAddress(
             [
@@ -178,23 +170,13 @@ class RequestBuilder
         /** @var string|array $street */
         $street = $shippingAddress->getStreet();
 
-        $streetWithoutNumber = '';
-        $houseNumber = '';
-        if (is_array($street) && count($street) >= 2) {
-            $street = array_values(array_filter($street));
-            $streetWithoutNumber = $street[0] ?? '';
-            $houseNumber = $street[1] ?? '';
-        }
-
-        if (is_string($street)) {
-            $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $street, $matches) ? $matches[0] : $street;
-            $houseNumber = preg_match('/\d(.*)/', $street, $matches) ? $matches[0] : '';
-        }
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($shippingAddress);
+        $houseNumber = $this->getHousenumber($shippingAddress);
 
         // Location address data
         $request->setAddress([
                                  'country' => $shippingAddress->getCountryId(),
-                                 'street' => trim((string) $streetWithoutNumber),
+                                 'street' => $streetWithoutNumber,
                                  'postcode' => $shippingAddress->getPostcode(),
                                  'housenumber' => $houseNumber,
                                  'firstname' => $shippingAddress->getFirstname(),
@@ -222,5 +204,57 @@ class RequestBuilder
     {
         // The request for timeframes is identical to locations.
         return $this->buildForLocations($address);
+    }
+
+    private function getStreetWithoutHouseNumber(Address $address): string
+    {
+        $street = $address->getStreet();
+        if (!is_array($street)) {
+            throw new LocalizedException(__('Street should be an array'));
+        }
+
+        // Get the first street, containing the street name
+        $firstStreetItem = reset($street);
+
+        // Check if we're dealing with a single line street. If that's the case we'll extract the street using regex.
+        if (count($street) === 1) {
+            preg_match('/^(?:\b\d\w*\b\s*)?(\b[a-zA-Z]\w*\b\s*)*/', $firstStreetItem, $matches);
+
+            // Get the first street, containing the street name
+            return trim($matches[0]);
+        }
+
+        // If we're dealing with a multi line street, just return the first line.
+        return trim($firstStreetItem);
+    }
+
+    private function getHousenumber(Address $address): string
+    {
+        $street = $address->getStreet();
+        if (!$street) {
+            throw new LocalizedException(__('Street should be an array'));
+        }
+
+        // Trim spaces from all lines
+        $trimmedStreet = array_map(
+            static function ($line) {
+                return trim($line);
+            },
+            $street
+        );
+
+        // Check if we're dealing with a single line street. If that's the case we'll extract the street using regex.
+        $streetWithNumberPattern = '/\s(\d+[A-Za-z\s-]*)/';
+        $firstStreetItem = reset($street);
+        if (count($street) === 1 && preg_match($streetWithNumberPattern, $firstStreetItem, $matches)) {
+            // Get the first street, containing the street name
+            return trim($matches[0]);
+        }
+
+        // Remove first item
+        array_shift($trimmedStreet);
+
+        // And return as string
+        return trim(implode(' ', $trimmedStreet));
     }
 }
