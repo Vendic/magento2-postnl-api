@@ -1,4 +1,4 @@
-# vendic/magento2-postnl-api 
+# vendic/magento2-postnl-api  [![Integration Test](https://github.com/Vendic/magento2-postnl-api/actions/workflows/integration.yml/badge.svg)](https://github.com/Vendic/magento2-postnl-api/actions/workflows/integration.yml)
 This module adds [service contracts](https://developer.adobe.com/commerce/php/development/components/service-contracts/) to [postnl/postnl-magento2](https://github.com/postnl/postnl-magento2), since the original module works through controllers only.
 
 This allows you to use the PostNL API in your own Magento classes, without using a request. We use it in the PostNL module for the [Hyvä checkout](https://www.hyva.io/hyva-checkout.html).
