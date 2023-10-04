@@ -37,6 +37,7 @@ class RequestBuilder
      * address[Countrycode]: NL
      * address[HouseNr]: 2
      * address[HouseNrExt]: PBA
+     * // phpcs:ignore
      * address[Remark]: Dit is een Pakketautomaat met een brievenbus. Hier kunt u pakketten voorzien van een barcodelabel versturen. Pakketten en brieven die u op werkdagen vóór de lichtingstijd afgeeft worden binnen Nederland de volgende dag bezorgd.
      * address[Street]: Hannoverstraat
      * address[Zipcode]: 7418BL
@@ -176,14 +177,24 @@ class RequestBuilder
         // Extract street and housenumber from street array
         /** @var string|array $street */
         $street = $shippingAddress->getStreet();
-        $streetString = is_array($street) ? implode(' ', $street) : $street;
-        $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $streetString, $matches) ? $matches[0] : $streetString;
-        $houseNumber = preg_match('/\d(.*)/', $streetString, $matches) ? $matches[0] : '';
+
+        $streetWithoutNumber = '';
+        $houseNumber = '';
+        if (is_array($street) && count($street) >= 2) {
+            $street = array_values(array_filter($street));
+            $streetWithoutNumber = $street[0] ?? '';
+            $houseNumber = $street[1] ?? '';
+        }
+
+        if (is_string($street)) {
+            $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $street, $matches) ? $matches[0] : $street;
+            $houseNumber = preg_match('/\d(.*)/', $street, $matches) ? $matches[0] : '';
+        }
 
         // Location address data
         $request->setAddress([
                                  'country' => $shippingAddress->getCountryId(),
-                                 'street' => trim($streetWithoutNumber),
+                                 'street' => trim((string) $streetWithoutNumber),
                                  'postcode' => $shippingAddress->getPostcode(),
                                  'housenumber' => $houseNumber,
                                  'firstname' => $shippingAddress->getFirstname(),
