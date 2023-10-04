@@ -1,0 +1,44 @@
+name: Integration Test
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: 0 12 10 * *
+  push:
+    branches:
+      - master
+      - feature/additional-configuration
+    paths-ignore:
+      - "docs/**"
+      - package.json
+      - package-lock.json
+      - "*.md"
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "docs/**"
+      - package.json
+      - package-lock.json
+      - "*.md"
+
+jobs:
+  compute_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.supported-version.outputs.matrix }}
+    steps:
+      - uses: graycoreio/github-actions-magento2/supported-version@main
+        id: supported-version
+        with:
+          kind: latest
+      - run: echo ${{ steps.supported-version.outputs.matrix }}
+
+  integration-workflow:
+    needs: compute_matrix
+    uses: graycoreio/github-actions-magento2/.github/workflows/integration.yaml@main
+    with:
+      package_name: vendic/magento2-oh-dear-checks
+      matrix: ${{ needs.compute_matrix.outputs.matrix }}
+      test_command: ../../../vendor/bin/phpunit ../../../vendor/vendic/magento2-postnl-api/Test/Integration
+      fail-fast: false
