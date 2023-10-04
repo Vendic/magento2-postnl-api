@@ -68,11 +68,9 @@ class RequestBuilder
         // Extract street and housenumber from street array
         /** @var string|array $street */
         $street = $billingAddress->getStreet();
-        $streetString = is_array($street) ?
-            implode(' ', $street) :
-            $street;
-        $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $streetString, $matches) ? $matches[0] : $streetString;
-        $houseNumber = preg_match('/\d(.*)/', $streetString, $matches) ? $matches[0] : '';
+
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($shippingAddress);
+        $houseNumber = $this->getHousenumber($shippingAddress);
 
         // Customer data
         $request->setCustomerData(
@@ -123,15 +121,9 @@ class RequestBuilder
         // Extract street and housenumber from street array
         /** @var string|array $street */
         $street = $shippingAddress->getStreet();
-        $streetString = is_array($street) ?
-            implode(' ', $street) :
-            $street;
-        $streetWithoutNumber = preg_match('/^(.*?)(?=\d)/', $streetString, $matches) ?
-            $matches[0] :
-            $streetString;
-        $houseNumber = preg_match('/\d(.*)/', $streetString, $matches) ?
-            $matches[0] :
-            '';
+
+        $streetWithoutNumber = $this->getStreetWithoutHouseNumber($shippingAddress);
+        $houseNumber = $this->getHousenumber($shippingAddress);
 
         $request->setAddress(
             [
