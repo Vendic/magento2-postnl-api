@@ -55,4 +55,8 @@ interface PostnlRequestInterface
     public function setName($name);
 
     public function setFrom($from);
+
+    public function setDeliveryDate($deliveryDate);
+
+    public function setTo($to);
 }

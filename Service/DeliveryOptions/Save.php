@@ -80,6 +80,9 @@ class Save implements SaveInterface
     private function savePostNLOrderData(array $params, PostnlOrder $postnlOrder): void
     {
         foreach ($params as $key => $value) {
+            if ($key === PostnlOrder::FIELD_AC_INFORMATION) {
+                $value = $this->convertParamValueToJson($value);
+            }
             $postnlOrder->setData($key, $value);
         }
 
@@ -117,5 +120,17 @@ class Save implements SaveInterface
         }
 
         return $params;
+    }
+
+    public function convertParamValueToJson(mixed $value) : mixed
+    {
+        if (is_array($value) && empty($value)) {
+            $value = null;
+        }
+
+        if (!empty($value)) {
+            $value = json_encode($value);
+        }
+        return $value;
     }
 }
