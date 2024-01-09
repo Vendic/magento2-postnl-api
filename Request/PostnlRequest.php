@@ -95,4 +95,14 @@ class PostnlRequest extends DataObject implements PostnlRequestInterface
     {
         $this->setData('from', $from);
     }
+
+    public function setDeliveryDate($deliveryDate)
+    {
+        $this->setData('date', $deliveryDate);
+    }
+
+    public function setTo($to)
+    {
+        $this->setData('to', $to);
+    }
 }

@@ -9,7 +9,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote\Address;
 use Vendic\PostnlApi\Api\Data\LocationInterface;
 use Vendic\PostnlApi\Api\Data\PostnlRequestInterface;
-use Vendic\PostnlApi\Api\TimeframesInterface;
+use Vendic\PostnlApi\Api\Data\TimeframeInterface;
 use Vendic\PostnlApi\Api\Data\PostnlRequestInterfaceFactory;
 
 class RequestBuilder
@@ -112,11 +112,11 @@ class RequestBuilder
      */
     public function buildForDeliverySave(
         Address $shippingAddress,
-        ?TimeframesInterface $timeframe = null
+        ?TimeframeInterface $timeframe = null
     ): PostnlRequestInterface {
         /** @var PostnlRequestInterface $request */
         $request = $this->postnlRequestFactory->create();
-        $request->setType('fallback');
+        $request->setType($timeframe ? 'delivery' : 'fallback');
 
         // Extract street and housenumber from street array
         /** @var string|array $street */
@@ -144,6 +144,14 @@ class RequestBuilder
         // Set type to EPS for non NL/BE shipments
         if (!in_array($request->getCountry(), ['NL', 'BE'])) {
             $request->setType('EPS');
+        }
+
+        // Delivery Timeframes
+        if ($timeframe) {
+            $request->setDeliveryDate($timeframe->getDate());
+            $request->setOption($timeframe->getOption());
+            $request->setFrom($timeframe->getFrom());
+            $request->setTo($timeframe->getTo());
         }
 
         return $request;
