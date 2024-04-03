@@ -80,6 +80,11 @@ class Save implements SaveInterface
     private function savePostNLOrderData(array $params, PostnlOrder $postnlOrder): void
     {
         foreach ($params as $key => $value) {
+            // setting ac_information via direct method, because it is serializing the value for case when it's array
+            if ($key == 'ac_information') {
+                $postnlOrder->setAcInformation($value);
+                continue;
+            }
             $postnlOrder->setData($key, $value);
         }
 
