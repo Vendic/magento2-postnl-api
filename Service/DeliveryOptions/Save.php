@@ -83,6 +83,11 @@ class Save implements SaveInterface
             if ($key === PostnlOrder::FIELD_AC_INFORMATION) {
                 $value = $this->convertParamValueToJson($value);
             }
+
+            if (empty($value)) {
+                continue;
+            }
+
             $postnlOrder->setData($key, $value);
         }
 
@@ -117,6 +122,10 @@ class Save implements SaveInterface
             $params['address']['country'] = $params['address']['Countrycode'];
             $params['address']['postcode'] = $params['address']['Zipcode'];
             $params['date'] = $this->utils->getDeliveryDay($params['address']);
+        }
+
+        if ($params['date'] === 'keep') {
+            unset($params['date']);
         }
 
         return $params;
