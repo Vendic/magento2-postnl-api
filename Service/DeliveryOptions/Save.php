@@ -66,12 +66,10 @@ class Save implements SaveInterface
 
         $this->savePostNLOrderData($params, $postnlOrder);
 
-        if ($type != 'pickup') {
-            $this->pickupAddress->remove();
-        }
-
         if ($type == 'pickup') {
             $this->pickupAddress->set($params['pg_address']);
+        } else if ($type == 'delivery') {
+            $this->pickupAddress->remove();
         }
 
         return true;
