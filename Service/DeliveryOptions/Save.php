@@ -64,6 +64,10 @@ class Save implements SaveInterface
         $params = $this->orderParams->get($this->addSessionDataToParams($postnlRequest->getParams()));
         $postnlOrder = $this->utils->getPostNLOrderByQuoteId($params['quote_id']);
 
+        if ($type == 'fallback') {
+            unset ($params['is_pakjegemak']);
+        }
+
         $this->savePostNLOrderData($params, $postnlOrder);
 
         if ($type == 'pickup') {
@@ -82,7 +86,7 @@ class Save implements SaveInterface
                 $value = $this->convertParamValueToJson($value);
             }
 
-            if (empty($value)) {
+            if (empty($value) && $value !== 0) {
                 continue;
             }
 
