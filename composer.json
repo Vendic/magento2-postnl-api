@@ -3,7 +3,7 @@
     "description": "Adds Magento 2 service methods to the tig/postnl module.",
     "require": {
         "php": "~7.4|~8.1",
-        "tig/postnl-magento2": "1.12.*|1.13.*",
+        "tig/postnl-magento2": ">=1.12 <1.17",
         "magento/magento-composer-installer": "*"
     },
     "require-dev": {
