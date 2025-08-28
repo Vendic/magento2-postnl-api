@@ -3,7 +3,6 @@
 namespace Vendic\PostnlApi\Service\DeliveryOptions;
 
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
 use TIG\PostNL\Config\Provider\AddressConfiguration;
 use TIG\PostNL\Config\Provider\ProductOptions;

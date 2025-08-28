@@ -17,7 +17,6 @@ use TIG\PostNL\Service\Quote\ShippingDuration;
 use TIG\PostNL\Service\Shipment\EpsCountries;
 use TIG\PostNL\Service\Shipping\LetterboxPackage;
 use TIG\PostNL\Service\Validation\CountryShipping;
-use TIG\PostNL\Webservices\Endpoints\DeliveryDate;
 use TIG\PostNL\Webservices\Endpoints\TimeFrame;
 use Vendic\PostnlApi\Api\Data\PostnlRequestInterface;
 use Vendic\PostnlApi\Api\TimeframesInterface;

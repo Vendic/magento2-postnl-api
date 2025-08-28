@@ -5,7 +5,6 @@
 
 namespace Vendic\PostnlApi\Test\Integration\RequestBuilder;
 
-use Magento\Framework\ObjectManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use PHPUnit\Framework\TestCase;

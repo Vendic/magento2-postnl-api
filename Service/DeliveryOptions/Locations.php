@@ -2,12 +2,12 @@
 
 namespace Vendic\PostnlApi\Service\DeliveryOptions;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
 use TIG\PostNL\Helper\AddressEnhancer;
 use TIG\PostNL\Service\Carrier\Price\Calculator;
 use TIG\PostNL\Webservices\Endpoints\Locations as LocationsEndpoint;
-use Magento\Checkout\Model\Session;
-use Magento\Framework\Exception\LocalizedException;
 use Vendic\PostnlApi\Api\Data\LocationInterface;
 use Vendic\PostnlApi\Api\Data\LocationInterfaceFactory;
 use Vendic\PostnlApi\Api\Data\PostnlRequestInterface;
@@ -78,7 +78,7 @@ class Locations implements LocationsInterface
         $quote = $this->checkoutSession->getQuote();
         $storeId = $quote->getStoreId();
         $this->locationsEndpoint->changeAPIKeyByStoreId($storeId);
-        $this->locationsEndpoint->updateParameters($address ,$deliveryDate);
+        $this->locationsEndpoint->updateParameters($address, $deliveryDate);
         $response = $this->locationsEndpoint->call();
         //@codingStandardsIgnoreLine
         if (!is_object($response) || !isset($response->GetLocationsResult->ResponseLocation)) {
@@ -93,7 +93,7 @@ class Locations implements LocationsInterface
         $factory = $this->locationFactory;
 
         return array_map(
-            static  function (array $locationData) use ($factory) {
+            static function (array $locationData) use ($factory) {
                 return $factory->create(['data' => $locationData]);
             },
             $responseArray
